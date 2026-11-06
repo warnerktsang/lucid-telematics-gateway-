@@ -3,13 +3,22 @@ package auth
 import (
 	"context"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	routing "github.com/go-ozzo/ozzo-routing/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/entity"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/errors"
 	"net/http"
 	"strings"
 )
+
+// allowedSigningMethods lists the HMAC algorithms a vehicle token may be signed with.
+// Tokens are issued with HS256; the full HMAC family mirrors the SigningMethodHMAC
+// check that was in place before the switch to golang-jwt/jwt/v5.
+var allowedSigningMethods = []string{
+	jwt.SigningMethodHS256.Alg(),
+	jwt.SigningMethodHS384.Alg(),
+	jwt.SigningMethodHS512.Alg(),
+}
 
 // Handler returns a JWT-based authentication middleware that validates per-vehicle tokens.
 // The token is expected in the "Authorization: Bearer <token>" header and must carry
@@ -27,7 +36,7 @@ func Handler(verificationKey string) routing.Handler {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
 			return []byte(verificationKey), nil
-		})
+		}, jwt.WithValidMethods(allowedSigningMethods), jwt.WithIssuedAt())
 		if err != nil || !token.Valid {
 			return unauthorized(c)
 		}

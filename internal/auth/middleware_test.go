@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/test"
 	"net/http"
@@ -28,9 +28,9 @@ func vehicleClaims(vin, fleetID string, exp time.Time) VehicleClaims {
 	return VehicleClaims{
 		VIN:     vin,
 		FleetID: fleetID,
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "100",
-			ExpiresAt: exp.Unix(),
+			ExpiresAt: jwt.NewNumericDate(exp),
 		},
 	}
 }
@@ -79,7 +79,7 @@ func TestHandler_Rejects(t *testing.T) {
 		{"wrong key", "Bearer " + signedToken(t, "other-key", jwt.SigningMethodHS256, vehicleClaims("50EA1TEA1PA004821", "fleet-sf-01", future))},
 		{"expired", "Bearer " + signedToken(t, testKey, jwt.SigningMethodHS256, vehicleClaims("50EA1TEA1PA004821", "fleet-sf-01", time.Now().Add(-time.Hour)))},
 		{"empty fleet_id", "Bearer " + signedToken(t, testKey, jwt.SigningMethodHS256, vehicleClaims("50EA1TEA1PA004821", "", future))},
-		{"missing vehicle claims", "Bearer " + signedToken(t, testKey, jwt.SigningMethodHS256, jwt.StandardClaims{Subject: "100", ExpiresAt: future.Unix()})},
+		{"missing vehicle claims", "Bearer " + signedToken(t, testKey, jwt.SigningMethodHS256, jwt.RegisteredClaims{Subject: "100", ExpiresAt: jwt.NewNumericDate(future)})},
 		{"none algorithm", "Bearer " + signedToken(t, testKey, jwt.SigningMethodNone, vehicleClaims("50EA1TEA1PA004821", "fleet-sf-01", future))},
 	}
 	for _, tt := range tests {

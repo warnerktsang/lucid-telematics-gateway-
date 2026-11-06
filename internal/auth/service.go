@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/entity"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/errors"
 	"github.com/warnerktsang/lucid-telematics-gateway/pkg/log"
@@ -36,7 +36,7 @@ type Vehicle interface {
 type VehicleClaims struct {
 	VIN     string `json:"vin"`
 	FleetID string `json:"fleet_id"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 type service struct {
@@ -86,10 +86,10 @@ func (s service) generateJWT(identity Identity, vehicle Vehicle) (string, error)
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, VehicleClaims{
 		VIN:     vehicle.GetVIN(),
 		FleetID: vehicle.GetFleetID(),
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   identity.GetID(),
-			IssuedAt:  now.Unix(),
-			ExpiresAt: now.Add(time.Duration(s.tokenExpiration) * time.Hour).Unix(),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(s.tokenExpiration) * time.Hour)),
 		},
 	}).SignedString([]byte(s.signingKey))
 }
