@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/entity"
 	"github.com/warnerktsang/lucid-telematics-gateway/internal/errors"
@@ -47,7 +47,7 @@ func Test_service_GenerateJWT(t *testing.T) {
 		assert.Equal(t, "50EA1TEA1PA004821", claims.VIN)
 		assert.Equal(t, "fleet-sf-01", claims.FleetID)
 		assert.Equal(t, "100", claims.Subject)
-		assert.NotZero(t, claims.ExpiresAt)
+		assert.NotNil(t, claims.ExpiresAt)
 	}
 }
 
